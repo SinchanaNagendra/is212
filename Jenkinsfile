@@ -1,52 +1,28 @@
 pipeline {
     agent any
-
     environment {
-    DOCKERHUB_USER = 'sinchananagendra'  
-    APP_NAME = 'is212'                  
-    IMAGE_TAG = "v${env.BUILD_NUMBER}"
-}
-
+        // Use the exact ID you created in Manage Jenkins > Credentials
+        DOCKER_CREDS =dockerhub-creds' 
+        DOCKERHUB_USER = 'sinchananagendra'
+        APP_NAME = 'is212'
+    }
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
-        stage('Build Docker Image') {
+        stage('Build and Push') {
             steps {
                 script {
-                    echo "Building image: ${DOCKERHUB_USER}/${APP_NAME}:${IMAGE_TAG}"
-                    // Change 'sh' to 'bat' for Windows
-                    bat "docker build -t ${DOCKERHUB_USER}/${APP_NAME}:${IMAGE_TAG} ."
+                    // 1. Build the image locally
+                    bat "docker build -t ${DOCKERHUB_USER}/${APP_NAME}:v${env.BUILD_NUMBER} ."
+                    
+                    // 2. Login using the credentials (this is the part that was failing)
+                    bat "echo %DOCKER_CREDS_PSW% | docker login -u ${DOCKERHUB_USER} --password-stdin"
+                    
+                    // 3. Push to Docker Hub
+                    bat "docker push ${DOCKERHUB_USER}/${APP_NAME}:v${env.BUILD_NUMBER}"
+                    
+                    // 4. Cleanup to save disk space
+                    bat "docker rmi ${DOCKERHUB_USER}/${APP_NAME}:v${env.BUILD_NUMBER}"
                 }
             }
-        }
-
-        stage('Login & Push to Docker Hub') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', 
-                                  passwordVariable: 'DOCKER_PASS', 
-                                  usernameVariable: 'DOCKER_USER')]) {
-                    script {
-                        // Change 'sh' to 'bat' and update the login syntax for Windows cmd
-                        bat "echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin"
-                        bat "docker push %DOCKER_USER%/%APP_NAME%:%IMAGE_TAG%"
-                        
-                        bat "docker tag %DOCKER_USER%/%APP_NAME%:%IMAGE_TAG% %DOCKER_USER%/%APP_NAME%:latest"
-                        bat "docker push %DOCKER_USER%/%APP_NAME%:latest"
-                    }
-                }
-            }
-        }
-    }
-
-    post {
-        always {
-            echo "Cleaning up local images..."
-            // Use 'bat' and the Windows way to ignore errors (|| exit 0)
-            bat "docker rmi %DOCKERHUB_USER%/%APP_NAME%:%IMAGE_TAG% || exit 0"
         }
     }
 }
