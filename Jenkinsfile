@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         // Use the exact ID you created in Manage Jenkins > Credentials
-        DOCKER_CREDS =dockerhub-creds' 
+        DOCKER_CREDS = 'dockerhub-creds' 
         DOCKERHUB_USER = 'sinchananagendra'
         APP_NAME = 'is212'
     }
