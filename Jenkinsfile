@@ -2,10 +2,10 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER = 'sinchananagendra' 
-        APP_NAME = 'is212'
-        IMAGE_TAG = "v${env.BUILD_NUMBER}"
-    }
+    DOCKERHUB_USER = 'sinchananagendra'  
+    APP_NAME = 'is212'                  
+    IMAGE_TAG = "v${env.BUILD_NUMBER}"
+}
 
     stages {
         stage('Checkout') {
